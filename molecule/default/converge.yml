@@ -1,0 +1,23 @@
+---
+- name: Converge
+  hosts: all
+
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Ensure required volume dirs are created.
+      become: true
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "0755"
+        owner: vagrant
+        group: vagrant
+        state: directory
+        setype: container_file_t
+      loop:
+        - "{{ postgres_volumes_dir }}"
+
+    - name: "Include palekiwi.postgres"
+      ansible.builtin.include_role:
+        name: "palekiwi.postgres"

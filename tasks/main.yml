@@ -1,0 +1,20 @@
+---
+- name: Check if user has lingering enabled.
+  ansible.builtin.command:
+    cmd: "ls /var/lib/systemd/linger"
+  changed_when: false
+  register: linger
+
+- name: Enable linger for user {{ postgres_user }}
+  become: true
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ postgres_user }}"
+  changed_when: true
+  when: "postgres_user not in linger.stdout"
+
+- name: Run tasks under user {{ postgres_user }}.
+  become: true
+  become_user: "{{ postgres_user }}"
+  block:
+    - name: Include app tasks.
+      ansible.builtin.include_tasks: app.yml

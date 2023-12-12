@@ -1,0 +1,19 @@
+---
+postgres_user: vagrant
+
+postgres_pod_name: postgres
+postgres_container_name: postgres-container
+
+postgres_volumes_dir: /mnt/postgres
+
+postgres_net_name: postgres
+
+postgres_publish:
+  - 5432:5432
+
+postgres_image_name: docker.io/library/postgres
+postgres_image_tag: latest
+
+postgres_db_user: nextcloud
+postgres_db_database: nextcloud
+postgres_db_password: nextcloud

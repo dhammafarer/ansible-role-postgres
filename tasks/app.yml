@@ -1,0 +1,55 @@
+---
+- name: Ensure Podman network for postgres exists.
+  containers.podman.podman_network:
+    name: "{{ postgres_net_name }}"
+    state: present
+
+- name: Ensure volume directories exist.
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_volumes_dir }}/{{ item.dir }}"
+    owner: "{{ postgres_user }}"
+    group: "{{ postgres_user }}"
+    mode: "{{ item.mode }}"
+    state: directory
+  loop:
+    - { dir: "data", mode: "770"}
+
+- name: Ensure a pod exists for {{ postgres_pod_name }}.
+  containers.podman.podman_pod:
+    name: "{{ postgres_pod_name }}"
+    userns: keep-id
+    state: created
+    recreate: true
+    publish: "{{ postgres_publish }}"
+    network:
+      - "{{ postgres_net_name }}"
+
+- name: Ensure db container exists.
+  containers.podman.podman_container:
+    pod: "{{ postgres_pod_name }}"
+    name: "{{ postgres_container_name }}"
+    image: "{{ postgres_image_name }}:{{ postgres_image_tag }}"
+    state: created
+    restart_policy: always
+    volumes:
+      - "{{ postgres_volumes_dir }}/data:/var/lib/postgresql/data:Z"
+    env:
+      POSTGRES_USER: "{{ postgres_db_user }}"
+      POSTGRES_PASSWORD: "{{ postgres_db_password }}"
+      POSTGRES_DB: "{{ postgres_db_database }}"
+      TZ: "Asia/Taipei"
+
+- name: Generate systemd units for {{ postgres_pod_name }}.
+  containers.podman.podman_generate_systemd:
+    name: "{{ postgres_pod_name }}"
+    dest: "/home/{{ postgres_user }}/.config/systemd/user/"
+    restart_policy: on-failure
+    force: true
+
+- name: Ensure systemd units are started and enabled for {{ postgres_pod_name }}.
+  ansible.builtin.systemd:
+    scope: user
+    daemon_reload: true
+    name: "pod-{{ postgres_pod_name }}"
+    state: started

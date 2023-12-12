@@ -1,0 +1,16 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Run tasks for the user "{{ postgres_user }}".
+      block:
+        - name: Check that localhost is listening on the required port.
+          when: postgres_publish | length > 0
+          ansible.builtin.wait_for:
+            port: 5432
+            timeout: 2
