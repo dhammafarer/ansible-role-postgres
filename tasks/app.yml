@@ -38,7 +38,7 @@
       POSTGRES_USER: "{{ postgres_db_user }}"
       POSTGRES_PASSWORD: "{{ postgres_db_password }}"
       POSTGRES_DB: "{{ postgres_db_database }}"
-      TZ: "Asia/Taipei"
+      TZ: "{{ postgres_env_tz }}"
 
 - name: Generate systemd units for {{ postgres_pod_name }}.
   containers.podman.podman_generate_systemd:
@@ -51,5 +51,6 @@
   ansible.builtin.systemd:
     scope: user
     daemon_reload: true
+    enabled: true
     name: "pod-{{ postgres_pod_name }}"
     state: started
